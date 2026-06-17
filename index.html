@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>時空幾何修復計畫 第十五版連動版</title>
+    <style>
+        :root {
+            --space-bg: #020617;      
+            --panel-bg: #0b1329;      
+            --neon-blue: #00f2fe;     
+            --neon-purple: #9d4edd;   
+            --neon-green: #10b981;    
+            --neon-red: #ff0055;      
+            --text-light: #f8fafc;
+            --high-bright-shape: #d800ff; 
+        }
+
+        body {
+            font-family: 'Courier New', Courier, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background: var(--space-bg);
+            background-image: 
+                radial-gradient(white, rgba(255,255,255,.15) 2px, transparent 40px),
+                radial-gradient(white, rgba(255,255,255,.1) 1px, transparent 30px);
+            background-size: 550px 550px, 350px 350px;
+            background-position: 0 0, 40px 60px;
+            margin: 0; padding: 20px; color: var(--text-light);
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+        }
+
+        .container {
+            max-width: 850px; width: 100%; background: rgba(11, 19, 41, 0.95);
+            padding: 35px; border-radius: 20px; border: 3px solid var(--neon-blue);
+            box-shadow: 0 0 30px rgba(0, 242, 254, 0.3); position: relative;
+        }
+
+        .shake { animation: shakeAnim 0.4s ease-in-out; }
+        @keyframes shakeAnim {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        h1.game-title {
+            text-align: center; font-size: 42px; color: var(--neon-blue);
+            text-shadow: 0 0 20px rgba(0, 242, 254, 0.7), 0 0 40px rgba(157, 78, 221, 0.5);
+            margin-bottom: 40px; font-weight: 900; letter-spacing: 4px;
+        }
+
+        h2 {
+            font-size: 24px; color: var(--neon-blue); text-shadow: 0 0 10px rgba(0, 242, 254, 0.6);
+            border-bottom: 2px dashed var(--neon-purple); padding-bottom: 15px; margin-top: 0;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .btn {
+            background: #1c2541; color: var(--neon-blue); border: 2px solid var(--neon-blue);
+            padding: 14px 35px; font-size: 18px; font-weight: bold; border-radius: 8px;
+            cursor: pointer; transition: all 0.2s ease; text-shadow: 0 0 5px var(--neon-blue);
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.2);
+        }
+        .btn:hover { background: var(--neon-blue); color: var(--space-bg); box-shadow: 0 0 25px var(--neon-blue); transform: translateY(-2px); }
+        .btn:disabled { background: #3a506b; color: #8d99ae; border-color: #3a506b; cursor: not-allowed; text-shadow: none; box-shadow: none; }
+
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 8px; color: var(--neon-purple); font-weight: bold; }
+        .input-group input, .input-group textarea {
+            width: 100%; padding: 14px; background: #0b1329; border: 2px solid var(--neon-purple);
+            border-radius: 8px; color: #fff; font-size: 16px; box-sizing: border-box;
+        }
+        .input-group textarea { resize: vertical; min-height: 80px; font-family: inherit; }
+
+        .concept-dashboard {
+            background: linear-gradient(135deg, rgba(11, 19, 41, 0.9) 0%, rgba(28, 37, 65, 0.8) 100%);
+            border: 2px solid var(--neon-purple); box-shadow: 0 0 15px rgba(157, 78, 221, 0.3);
+            padding: 25px; margin-bottom: 30px; border-radius: 12px;
+        }
+        .concept-title { font-size: 18px; color: var(--neon-blue); font-weight: bold; margin-bottom: 15px; text-shadow: 0 0 8px rgba(0,242,254,0.4); }
+        .concept-core-box { background: rgba(2, 6, 23, 0.6); border-left: 4px solid var(--neon-blue); padding: 15px; margin: 12px 0; border-radius: 0 8px 8px 0; }
+
+        .options-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .option-btn {
+            background: #0b1329; border: 2px solid #3a506b; padding: 16px; color: var(--text-light);
+            text-align: left; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; transition: all 0.15s ease;
+        }
+        .option-btn:hover { border-color: var(--neon-blue); color: var(--neon-blue); box-shadow: 0 0 15px rgba(0, 242, 254, 0.2); }
+
+        .status-container { display: flex; gap: 20px; margin-bottom: 20px; }
+        .status-bar-wrapper { flex: 1; background: #1c2541; height: 12px; border-radius: 6px; overflow: hidden; border: 1px solid #3a506b; }
+        .status-bar { height: 100%; width: 0%; transition: width 0.3s ease; }
+        .bar-progress { background: linear-gradient(90deg, var(--neon-purple), var(--neon-blue)); }
+        .status-label { font-size: 12px; margin-bottom: 4px; font-weight: bold; }
+
+        .feedback-message { margin-top: 20px; padding: 15px; border-radius: 8px; font-weight: bold; display: none; white-space: pre-line; }
+        .feedback-success { background: rgba(16, 185, 129, 0.15); color: var(--neon-green); border: 1px solid var(--neon-green); }
+        .feedback-danger { background: rgba(255, 0, 85, 0.15); color: var(--neon-red); border: 1px solid var(--neon-red); box-shadow: 0 0 15px rgba(255,0,85,0.3); }
+
+        .timer { font-size: 18px; color: var(--neon-red); border: 1px solid var(--neon-red); padding: 4px 12px; text-shadow: 0 0 5px var(--neon-red); }
+
+        .canvas-container { display: flex; flex-direction: column; align-items: center; margin: 20px 0; }
+        #symmetry-canvas { border: 3px solid var(--neon-blue); background: #020617; border-radius: 8px; box-shadow: 0 0 20px rgba(0,242,254,0.15); cursor: crosshair; }
+
+        .countdown-number { font-size: 120px; color: var(--neon-blue); text-shadow: 0 0 30px var(--neon-blue); text-align: center; margin: 50px 0; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="main-container">
+    <div id="dashboard-status" style="display:none; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between;">
+            <div style="flex: 1;">
+                <div class="status-label" style="color:var(--neon-blue);">🚀 冒險總進度</div>
+                <div class="status-bar-wrapper"><div id="bar-progress-id" class="status-bar bar-progress"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-title-screen" class="page active">
+        <h1 class="game-title">時空幾何修復計畫</h1>
+        <div style="text-align: center; margin-top: 40px;">
+            <button class="btn" onclick="showPage('page-login')">啟動星際控制台 ➔</button>
+        </div>
+    </div>
+
+    <div id="page-login" class="page">
+        <h2>👤 探險家身分識別驗證</h2>
+        <div class="input-group"><label>🛸 探險班級</label><input type="text" id="student-class" placeholder="例如：702"></div>
+        <div class="input-group"><label>🆔 能源座號</label><input type="number" id="student-no" placeholder="例如：05"></div>
+        <div class="input-group"><label>👤 探險家姓名</label><input type="text" id="student-name" placeholder="請輸入姓名"></div>
+        <div style="text-align: center; margin-top: 30px;"><button class="btn" onclick="goToRules()">確認身份，進行登錄 ➔</button></div>
+    </div>
+
+    <div id="page-rules" class="page">
+        <h2>📜 冒險行安全叮嚀</h2>
+        <div class="concept-dashboard" style="line-height: 1.8; font-size: 16px;">
+            <div class="concept-title">💡 必看防爆規則：</div>
+            1. 總共有二個基礎單元，每個單元都需要**累積答對滿 5 題**才能通關。<br>
+            2. **嚴格連帶處罰**：無論基礎練習或競速，**只要答錯，除了重新訂正外，系統會在後方加罰一題防線加強題！** 請務必看清題目再作答。<br>
+            3. 完成所有基礎練習後，會開啟終極計時競速關卡，資料將自動同步至教師端試算表。
+        </div>
+        <div style="text-align: center;"><button class="btn" onclick="goToReady('page-inequality-concept', '🌀 正在建立時空通道...')">我懂了，出發！ ➔</button></div>
+    </div>
+
+    <div id="page-ready" class="page">
+        <h2 style="justify-content: center; border:none;" id="ready-title-text">🌀 正在解鎖時空傳送門...</h2>
+        <div class="countdown-number" id="countdown-text">3</div>
+        <p style="text-align: center; color: var(--neon-purple); font-weight: bold;">幾何坐標鎖定中，請做好準備...</p>
+    </div>
+
+    <div id="page-inequality-concept" class="page">
+        <h2>⚡ 單元一：一元一次不等式 觀念</h2>
+        <div class="concept-dashboard">
+            <div class="concept-title">📡 代數破譯公式：</div>
+            <div class="concept-core-box">📌 <strong>關鍵一：加減法移項</strong><br>把項次搬到不等號另一邊並改變正負號，不會改變不等號的方向！</div>
+            <div class="concept-core-box">⚠️ <strong>關鍵二：同乘以或同除以負數</strong><br>當不等式兩邊同時「同乘以」或「同除以」一個負數時，不等號的方向必須反轉！（大於變小於、小於變大於）</div>
+        </div>
+        <div style="text-align: center;"><button class="btn" onclick="startQuiz('inequality_basic')">解鎖不等式防線 (目標5題) ➔</button></div>
+    </div>
+
+    <div id="page-quiz" class="page">
+        <h2><span id="quiz-title">題目載入中</span> <span id="quiz-progress" style="font-size: 16px; color: var(--neon-purple);"></span></h2>
+        <div class="quiz-box">
+            <div class="concept-dashboard" style="border-color: var(--neon-blue); padding: 20px; margin-bottom: 20px;">
+                <p id="quiz-question" style="font-size: 18px; font-weight: bold; color:#fff; line-height: 1.6; margin: 0;"></p>
+            </div>
+            <div class="options-container" id="quiz-options"></div>
+            <div id="quiz-feedback" class="feedback-message"></div>
+            <div style="text-align: right; margin-top: 25px; display: none;" id="next-btn-container">
+                <button class="btn" id="next-action-btn" onclick="nextQuestion()">下一題 ➔</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-symmetry-concept" class="page">
+        <h2>⚡ 單元二：線對稱鏡像幾何 觀念</h2>
+        <div class="concept-dashboard">
+            <div class="concept-title">📡 鏡像光學規則：</div>
+            <div class="concept-core-box">📐 <strong>重點一：對稱軸</strong><br>把圖形沿著一條直線對折後能完全重合。</div>
+            <div class="concept-core-box">📐 <strong>重點二：對稱點連線性質</strong><br>任何一組對稱點的連線，都會被對稱軸垂直平分！此外，對稱線段會一樣長。</div>
+        </div>
+        <div style="text-align: center;"><button class="btn" onclick="startQuiz('symmetry_basic')">解鎖線對稱防線 (目標5題) ➔</button></div>
+    </div>
+
+    <div id="page-speedrun-rules" class="page">
+        <h2>🏁 終極競速模式規則說明</h2>
+        <div class="concept-dashboard" style="line-height: 1.8; font-size: 16px; border-color: var(--neon-red);">
+            <div class="concept-title" style="color: var(--neon-red);">⚠️ 競速大考驗規範：</div>
+            1. 本階段將出 **10 題** 綜合挑戰題（由淺入深，硬核高階題嚴格放置於最後壓軸）。<br>
+            2. 系統會同步啟動精密計時器，全速前進破關。<br>
+            3. **錯題處罰**：如果選錯或畫錯，除了自動往後追加一題外，還會影響最終的通關時間紀錄！
+        </div>
+        <div style="text-align: center; margin-top: 30px;">
+            <button class="btn" style="border-color: var(--neon-red); color: var(--neon-red);" onclick="goToReady('speedrun_start', '🏁 正在載入極限競速跑道...')">準備開始 ➔</button>
+        </div>
+    </div>
+
+    <div id="page-speedrun" class="page">
+        <h2>🏁 終極修復：極限計時賽 <div class="timer" style="display:inline-block;"><span id="game-time">0.0</span>s</div></h2>
+        <p style="color: var(--neon-purple); font-weight: bold; font-size: 14px;" id="speedrun-stage-indicator">全速衝刺中...</p>
+        <hr style="border-color: #1c2541; margin: 15px 0;">
+
+        <div id="sr-stage-calc" class="speedrun-substage" style="display:none;">
+            <div class="concept-dashboard" style="border-color: var(--neon-blue);">
+                <p style="font-size: 16px; font-weight: bold; margin: 0 0 15px 0;" id="sr-calc-title">題目載入中</p>
+                <p id="sr-calc-question" style="font-size: 20px; text-align: center; margin: 10px 0; color: var(--neon-blue); font-weight: bold; line-height:1.5;"></p>
+            </div>
+            <div class="options-container" id="sr-calc-options"></div>
+        </div>
+
+        <div id="sr-stage-sym" class="speedrun-substage" style="display:none;">
+            <div class="concept-dashboard" style="border-color: var(--neon-purple);">
+                <p style="font-size: 16px; font-weight: bold; margin: 0;" id="sr-sym-title">題目載入中</p>
+            </div>
+            <div class="canvas-container">
+                <canvas id="symmetry-canvas" width="400" height="400"></canvas>
+                <button class="btn" style="margin-top: 20px;" onclick="checkSymmetryDrawing()">我畫好了，送出檢查 ➔</button>
+            </div>
+        </div>
+
+        <div id="speedrun-feedback" class="feedback-message"></div>
+    </div>
+    
+    <div id="page-result" class="page">
+        <h2>結界修復成功！數據同步中...</h2>
+        <div class="concept-dashboard" style="text-align: center; border-color: var(--neon-green); margin-bottom:25px;">
+            <p id="result-info" style="font-size: 18px; color: #fff;"></p>
+            <p id="result-score" style="font-size: 32px; color: var(--neon-green); font-weight: bold; margin: 20px 0; text-shadow: 0 0 10px var(--neon-green);"></p>
+            <p>任務已圓滿終結。請填寫下方修復日誌，完成後點擊按鈕，系統會將成績直接連動上傳至老師的雲端試算表！</p>
+        </div>
+
+        <h2>📝 幾何修復日誌回饋單</h2>
+        <div class="concept-dashboard" style="border-color: var(--neon-purple);">
+            <div class="input-group">
+                <label>🧠 1. 在這場時空修復中，我學習到了什麼？</label>
+                <textarea id="feedback-q1" placeholder="例如：學會了不等式同除以負數要變向，還有對稱軸垂直平分性質..."></textarea>
+            </div>
+            <div class="input-group">
+                <label>💡 2. 對於本次修復任務，我有什麼建議？</label>
+                <textarea id="feedback-q2" placeholder="對遊戲設計、關卡難度或畫面的想法..."></textarea>
+            </div>
+            <div class="input-group">
+                <label>💬 3. 我想對老師說的話：</label>
+                <textarea id="feedback-q3" placeholder="寫下任何想跟老師分享的心情或收穫..."></textarea>
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn" id="submit-cloud-btn" style="border-color:var(--neon-green); color:var(--neon-green);" onclick="submitToGoogleSheets()">🚀 送出修復日誌並連動雲端試算表</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// --- 🛰️ Google Apps Script 雲端連動網址設定區 ---
+// 請在完成後方教學後，將您的 GAS 部署網址貼在下方雙引號內
+var GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxnNehef6EJdqNpjyrTDdLhqwvET8EgzqYMZUTz7YRSqO_fIYJkvxj_jtQFqe0I3Way/exec"; 
+
+// --- 📦 大幅擴充基礎與處罰題庫 ---
+var repoInequality = [
+    { calc: "解不等式： 3x - 4 > 11", a: ["x > 5","x < 5","x > 2","x < 2"], c: 0, hint: "移項得 3x > 15，同除以正數方向不變。" },
+    { calc: "解不等式： -2x >= 10", a: ["x <= -5","x >= -5","x <= 5","x >= 5"], c: 0, hint: "注意！兩邊同時「同除以負數」時，不等號方向一定要大逆轉！" },
+    { calc: "解不等式： 4 - x < 9", a: ["x > -5","x < -5","x > 5","x < 5"], c: 0, hint: "移項後得 -x < 5，同乘以 -1 變正數時，不等號方向翻轉！" },
+    { calc: "解不等式： 4x + 6 < 2x", a: ["x < -3","x > -3","x < 3","x > 3"], c: 0, hint: "移項得 2x < -6，同除以正數，符號不轉向。" },
+    { calc: "解不等式:  x / -4 >= 2", a: ["x <= -8","x >= -8","x <= 8","x >= 8"], c: 0, hint: "同乘以分母的負數 -4，不等號方向必須大逆轉！" },
+    { calc: "解不等式： 5x - 3 > 12", a: ["x > 3","x < 3","x > 5","x < 5"], c: 0, hint: "把 -3 移項得 5x > 15，除以 5 得 x > 3。" },
+    { calc: "解不等式： -3x < 18", a: ["x > -6","x < -6","x > 6","x < 6"], c: 0, hint: "同除以負數 -3，小於必須改為大於！" },
+    { calc: "解不等式： 2 - 3x >= 11", a: ["x <= -3","x >= -3","x <= 3","x >= 3"], c: 0, hint: "移項得 -3x >= 9，同除以 -3，符號變向！" },
+    { calc: "解不等式： 6x + 4 <= 2x", a: ["x <= -1","x >= -1","x <= 1","x >= 1"], c: 0, hint: "移項得 4x <= -4，同除以 4 得 x <= -1。" },
+    { calc: "解不等式： 7x - 5 < 2x + 10", a: ["x < 3","x > 3","x < 5","x > 5"], c: 0, hint: "移項得 5x < 15，除以正數方向不變。" },
+    { calc: "解不等式： 10 - 2x > 4", a: ["x < 3","x > 3","x < -3","x > -3"], c: 0, hint: "移項得 -2x > -6，兩邊同除以 -2 記得符號變向！" },
+    { calc: "解不等式： 8x + 2 <= 5x - 7", a: ["x <= -3","x >= -3","x <= 3","x > 3"], c: 0, hint: "移項得 3x <= -9，同除以正數 3 得 x <= -3。" }
+];
+
+var repoSymmetry = [
+    { calc: "平面上有一個點 A(-2, 7)，若以 y 軸為對稱軸，其對稱點 B 的座標為何？", a: ["(2, 7)","(-2, -7)","(2, -7)","(7, -2)"], c: 0, hint: "以 y 軸為鏡，高低(y)不變，左右(x)變相反數。" },
+    { calc: "若點 M 到對稱軸的垂直距離是 4 公分，且點 N 為 M 的對稱點，則線段 MN 的總長度為多少公分？", a: ["8 公分","4 公分","16 公分","2 公分"], c: 0, hint: "對稱軸垂直平分連線，總長度為單邊距離的 2 倍。" },
+    { calc: "一個正五邊形總共有幾條對稱軸呢？", a: ["5 條","1 條","10 條","0 條"], c: 0, hint: "正 n 邊形的對稱軸數量剛好就會是 n 條。" },
+    { calc: "線段 AB 與線段 CD 以直線 L 為對稱軸互為線對稱。若 AB = 9 公分，則 CD 的長度是多少公分？", a: ["9 公分","18 公分","4.5 公分","無法確定"], c: 0, hint: "對稱圖形折疊後會完全重合，對應線段長度必相等。" },
+    { calc: "座標點 P(5, -3) 以 x 軸為對稱軸，其對稱點為何？", a: ["(5, 3)","(-5, -3)","(-5, 3)","(3, -4)"], c: 0, hint: "以 x 軸為鏡，左右(x)不變，上下(y)變相反數。" },
+    { calc: "平面點 K(4, 2) 以 y 軸為對稱軸，其對稱點座標為何？", a: ["(-4, 2)","(4, -2)","(-4, -2)","(2, 4)"], c: 0, hint: "以 y 軸為對稱軸，y 座標不變，x 座標變相反數。" },
+    { calc: "等腰三角形（非正三角形）總共有幾條對稱軸？", a: ["1 條","2 條","3 條","0 條"], c: 0, hint: "等腰三角形只有頂角平分線那 1 條對稱軸。" },
+    { calc: "平面點 Q(-6, -1) 以 x 軸為對稱軸，其對稱點座標為何？", a: ["(-6, 1)","(6, -1)","(6, 1)","(-1, -6)"], c: 0, hint: "以 x 軸對折，x 不變，y 變相反數。" },
+    { calc: "菱形（非正方形）總共有幾條對稱軸？", a: ["2 條","4 條","1 條","0 條"], c: 0, hint: "菱形的對稱軸是它的兩條對角線，共 2 條。" },
+    { calc: "若線段 XY = 12 公分，且直線 L 為其垂直平分線，則 X 點到直線 L 的距離為多少公分？", a: ["6 公分","12 公分","3 公分","24 公分"], c: 0, hint: "垂直平分線會平分線段，距離為總長的一半。" }
+];
+
+// 專為基礎練習準備的備用加罰題
+var extraBasicIneq = [
+    { calc: "【加罰題】解不等式： 15 - 3x < 6", a: ["x > 3","x < 3","x > -3","x < -3"], c: 0, hint: "移項得 -3x < -9，除以 -3 記得要變向！" },
+    { calc: "【加罰題】解不等式： 2x + 7 >= 5x - 2", a: ["x <= 3","x >= 3","x <= -3","x >= -3"], c: 0, hint: "移項得 -3x >= -9，同除以負數方向翻轉。" }
+];
+var extraBasicSym = [
+    { calc: "【加罰題】若 A, B 兩點對稱於直線 L，且線段 AB 總長度為 14 公分，則 A 點到直線 L 的距離為何？", a: ["7 公分","14 公分","28 公分","3.5 公分"], c: 0, hint: "對稱軸平分兩點連線，單邊距離為總長的一半。" },
+    { calc: "【加罰題】正方形總共有幾條對稱軸？", a: ["4 條","2 條","8 條","1 條"], c: 0, hint: "正方形有 2 條對角線與 2 條邊線中垂線，共 4 條。" }
+];
+
+// --- 🏁 深度擴充之競速題庫（保證不重複且由淺入深） ---
+var speedrunPool = [
+    // 基礎/中階運算防線
+    { type: 'ineq', calc: "解不等式： 5x - 7 < 3x + 9", a: ["x < 8", "x > 8", "x < 1", "x > 1"], c: 0 },
+    { type: 'ineq', calc: "解不等式： -4x + 3 >= -9", a: ["x <= 3", "x >= 3", "x <= -3", "x >= -3"], c: 0 },
+    { type: 'ineq', calc: "解不等式： 12 - 3x > 0", a: ["x < 4", "x > 4", "x < -4", "x > -4"], c: 0 },
+    { type: 'ineq', calc: "解不等式： 2(x - 3) <= 4", a: ["x <= 5", "x >= 5", "x <= 1", "x >= 1"], c: 0 },
+    
+    // 多樣化幾何互動網格作圖防線（加入斜對角線新方向）
+    { type: 'sym_draw', symType: 'diagonal_1', title: "45度斜線對稱（三視圖映射軸：原圖在左上，請對折鏡像至右下）" },
+    { type: 'sym_draw', symType: 'horizontal_mid', title: "水平軸對稱挑戰（對稱軸為中央第5條橫線，請對折鏡像）" },
+    { type: 'sym_draw', symType: 'vertical_mid', title: "垂直軸對稱挑戰（對稱軸為中央第5條直線，請對折鏡像）" },
+    { type: 'sym_draw', symType: 'diagonal_2', title: "45度反向斜對稱（對稱軸為右上到左下斜線，請對折鏡像）" },
+    
+    // 壓軸硬核高階挑戰題（分數、巢狀括號、變號）
+    { type: 'ineq', calc: "【高階挑戰】解不等式： (2x - 3)/3 - (x - 1)/2 <= 1", a: ["x <= 9", "x >= 9", "x <= 3", "x >= 3"], c: 0 },
+    { type: 'ineq', calc: "【高階挑戰】解不等式： -2(3x - 5) > 4x + 20", a: ["x < -1", "x > -1", "x < -3", "x > -3"], c: 0 },
+    { type: 'ineq', calc: "【高階挑戰】解不等式： 2 - [3 - 2(x - 1)] >= 5", a: ["x >= 4", "x <= 4", "x >= 2", "x <= 2"], c: 0 },
+    { type: 'ineq', calc: "【高階挑戰】解不等式： (x - 5)/-2 < 3", a: ["x > -1", "x < -1", "x > 11", "x < 11"], c: 0 }
+];
+
+// 競速加罰專用儲備題
+var penaltyIneqPool = [
+    { type: 'ineq', calc: "【競速加罰】解不等式： 7 - 2x >= 15", a: ["x <= -4", "x >= -4", "x <= 4", "x >= 4"], c: 0 },
+    { type: 'ineq', calc: "【競速加罰】解不等式： 3(x + 2) - 5 < 4", a: ["x < 1", "x > 1", "x < 3", "x > 3"], c: 0 },
+    { type: 'ineq', calc: "【競速加罰】解不等式： -5x + 4 > 2x - 10", a: ["x < 2", "x > 2", "x < -2", "x > -2"], c: 0 }
+];
+var penaltySymPool = [
+    { type: 'sym_draw', symType: 'horizontal_penalty', title: "【競速加罰】水平鏡像加固題（原圖於下方，請往上鏡像）" },
+    { type: 'sym_draw', symType: 'vertical_penalty', title: "【競速加罰】垂直鏡像加固題（原圖於右方，請往左鏡像）" }
+];
+
+var studentData = { class: '', no: '', name: '' };
+var currentMode = ''; var currentQuestionIndex = 0; var currentQuestionSet = [];
+var currentStageData = null;
+var timerInterval; var startTime; var finalTimeUsed = "0.0";
+
+var speedrunQueue = [];
+var currentSpeedrunIndex = 0;
+
+function triggerShake() {
+    var container = document.getElementById('main-container');
+    container.classList.remove('shake');
+    void container.offsetWidth; 
+    container.classList.add('shake');
+}
+
+function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+    document.getElementById(pageId).classList.add('active');
+}
+
+function goToRules() {
+    studentData.class = document.getElementById('student-class').value.trim();
+    studentData.no = document.getElementById('student-no').value.trim();
+    studentData.name = document.getElementById('student-name').value.trim();
+    if(!studentData.class || !studentData.no || !studentData.name) { alert("請完整輸入班級、座號與姓名！"); return; }
+    showPage('page-rules');
+}
+
+function goToReady(nextPageId, titleText) {
+    showPage('page-ready');
+    document.getElementById('ready-title-text').innerText = titleText;
+    var count = 3;
+    document.getElementById('countdown-text').innerText = count;
+    
+    var inst = setInterval(function() {
+        count--;
+        if(count > 0) { 
+            document.getElementById('countdown-text').innerText = count; 
+        } 
+        else {
+            clearInterval(inst);
+            document.getElementById('dashboard-status').style.display = 'block';
+            
+            if(nextPageId === 'speedrun_start') { 
+                showPage('page-speedrun');
+                startSpeedrunLogic();
+            } else { 
+                showPage(nextPageId); 
+            }
+        }
+    }, 1000);
+}
+
+function startQuiz(mode) {
+    currentMode = mode; 
+    currentQuestionIndex = 0;
+    var repo = (mode === 'inequality_basic') ? repoInequality : repoSymmetry;
+    // 隨機抽選 5 題作為初始關卡
+    currentQuestionSet = repo.slice().sort(function() { return 0.5 - Math.random(); }).slice(0, 5);
+    
+    document.getElementById('quiz-title').innerText = mode === 'inequality_basic' ? "單元一：不等式練習" : "單元二：線對稱練習";
+    updateProgressBar(mode === 'inequality_basic' ? 20 : 50);
+    loadQuestion();
+    showPage('page-quiz');
+}
+
+function loadQuestion() {
+    document.getElementById('quiz-feedback').style.display = 'none';
+    document.getElementById('next-btn-container').style.display = 'none';
+    
+    var qData = currentQuestionSet[currentQuestionIndex];
+    document.getElementById('quiz-progress').innerText = "[ 累積進度: " + (currentQuestionIndex + 1) + " / " + currentQuestionSet.length + " ]";
+    document.getElementById('quiz-question').innerText = qData.calc;
+    
+    var optionsHtml = '';
+    var btnOptions = qData.a;
+    var indices = [0,1,2,3].slice(0, btnOptions.length).sort(function() { return 0.5 - Math.random(); });
+    indices.forEach(function(idx) {
+        optionsHtml += '<button class="option-btn" onclick="checkAnswer(' + idx + ', ' + qData.c + ')">' + btnOptions[idx] + '</button>';
+    });
+    document.getElementById('quiz-options').innerHTML = optionsHtml;
+}
+
+function checkAnswer(selectedIndex, correctIndex) {
+    var feedback = document.getElementById('quiz-feedback');
+    var qData = currentQuestionSet[currentQuestionIndex];
+    
+    if (selectedIndex === correctIndex) {
+        feedback.className = "feedback-message feedback-success";
+        feedback.innerHTML = "🎯 完全正確！防線已成功修復。";
+        feedback.style.display = 'block';
+        
+        document.getElementById('next-btn-container').style.display = 'block';
+        document.getElementById('next-action-btn').innerText = "前進下一題 ➔";
+        document.getElementById('next-action-btn').onclick = nextQuestion;
+    } else {
+        triggerShake(); 
+        feedback.className = "feedback-message feedback-danger";
+        feedback.innerHTML = "❌ 答案錯誤！觸發安全警報，已自動在後方追加懲罰題！\n請看系統提示並重新選擇正確答案：\n\n " + qData.hint;
+        feedback.style.display = 'block';
+        document.getElementById('next-btn-container').style.display = 'none';
+        
+        // 🛠️ 核心優化 1：前面練習題答錯，立刻於佇列後方推入加罰題
+        var pool = (currentMode === 'inequality_basic') ? extraBasicIneq : extraBasicSym;
+        var rdmItem = pool[Math.floor(Math.random() * pool.length)];
+        // 避免指向同一物件
+        currentQuestionSet.push(Object.assign({}, rdmItem));
+        document.getElementById('quiz-progress').innerText = "[ 累積進度: " + (currentQuestionIndex + 1) + " / " + currentQuestionSet.length + " ]";
+    }
+}
+
+function nextQuestion() {
+    currentQuestionIndex++;
+    if (currentQuestionIndex < currentQuestionSet.length) { 
+        loadQuestion(); 
+    } else {
+        if (currentMode === 'inequality_basic') {
+            showPage('page-symmetry-concept');
+        } else {
+            updateProgressBar(75);
+            showPage('page-speedrun-rules');
+        }
+    }
+}
+
+function updateProgressBar(percent) { 
+    document.getElementById('bar-progress-id').style.width = percent + '%'; 
+}
+
+// ====================================================
+// 🎮 終極競速模式邏輯
+// ====================================================
+function startSpeedrunLogic() {
+    speedrunQueue = speedrunPool.slice();
+    currentSpeedrunIndex = 0;
+    
+    startTime = Date.now();
+    timerInterval = setInterval(function() { 
+        document.getElementById('game-time').innerText = ((Date.now() - startTime) / 1000).toFixed(1); 
+    }, 100);
+    
+    loadSpeedrunStage();
+}
+
+function loadSpeedrunStage() {
+    document.getElementById('speedrun-feedback').style.display = 'none';
+    document.querySelectorAll('.speedrun-substage').forEach(function(el) { el.style.display = 'none'; });
+    
+    if (currentSpeedrunIndex >= speedrunQueue.length) {
+        clearInterval(timerInterval); 
+        finalTimeUsed = document.getElementById('game-time').innerText;
+        updateProgressBar(100); 
+        showPage('page-result');
+        document.getElementById('result-info').innerText = "🎉 修復工程完成！探險家： " + studentData.class + " 班 [" + studentData.no + "] 號 【" + studentData.name + "】";
+        document.getElementById('result-score').innerText = "最終競速挑戰耗時：" + finalTimeUsed + " 秒！";
+        return;
+    }
+    
+    currentStageData = speedrunQueue[currentSpeedrunIndex];
+    document.getElementById('speedrun-stage-indicator').innerText = "🏁 衝刺進度：第 " + (currentSpeedrunIndex + 1) + " 關 / 總共 " + speedrunQueue.length + " 關";
+    
+    if (currentStageData.type === 'ineq') {
+        document.getElementById('sr-stage-calc').style.display = 'block';
+        document.getElementById('sr-calc-title').innerText = currentStageData.calc.includes("高階") ? "⚠️ 核心高階挑戰：" : "運算核心挑戰：";
+        document.getElementById('sr-calc-question').innerText = currentStageData.calc;
+        renderSpeedrunOptions(currentStageData.a, currentStageData.c);
+    } 
+    else if (currentStageData.type === 'sym_draw' || currentStageData.type.includes('sym')) {
+        document.getElementById('sr-stage-sym').style.display = 'block';
+        document.getElementById('sr-sym-title').innerText = currentStageData.title;
+        initSymmetryCanvasLogic(currentStageData.symType);
+    }
+}
+
+function renderSpeedrunOptions(opts, correctIdx) {
+    var html = '';
+    var correctText = opts[correctIdx];
+    var shuffled = opts.slice().sort(function() { return 0.5 - Math.random(); });
+    
+    shuffled.forEach(function(opt) {
+        html += '<button class="option-btn" onclick="checkSpeedrunCalc(\'' + opt + '\',\'' + correctText + '\')">' + opt + '</button>';
+    });
+    document.getElementById('sr-calc-options').innerHTML = html;
+}
+
+function checkSpeedrunCalc(selectedText, correctText) {
+    if (selectedText === correctText) {
+        currentSpeedrunIndex++;
+        loadSpeedrunStage();
+    } else {
+        triggerShake(); 
+        alert("⚠️ 計算失誤！時空出現裂縫，自動於尾端加罰一題防線螺絲題！");
+        var penaltyItem = penaltyIneqPool[Math.floor(Math.random() * penaltyIneqPool.length)];
+        speedrunQueue.push(Object.assign({}, penaltyItem));
+        currentSpeedrunIndex++;
+        loadSpeedrunStage();
+    }
+}
+
+// --- 幾何互動座標引擎 ---
+var userPoints = []; var targetPoints = []; var activeSymmetryType = 'diagonal_1';
+function initSymmetryCanvasLogic(type) {
+    activeSymmetryType = type;
+    var canvas = document.getElementById('symmetry-canvas');
+    var ctx = canvas.getContext('2d');
+    userPoints = [];
+    
+    // 多樣化題庫座標對應矩陣
+    if (type === 'diagonal_1') { 
+        targetPoints = [{x:4, y:3}, {x:5, y:4}, {x:6, y:3}]; 
+    } else if (type === 'horizontal_mid') {
+        targetPoints = [{x:4, y:7}, {x:6, y:7}, {x:5, y:6}]; 
+    } else if (type === 'vertical_mid') {
+        targetPoints = [{x:7, y:4}, {x:7, y:6}, {x:6, y:5}];
+    } else if (type === 'diagonal_2') {
+        // y = 10 - x 鏡像映射
+        targetPoints = [{x:6, y:7}, {x:5, y:6}, {x:4, y:7}];
+    } else if (type === 'horizontal_penalty') {
+        targetPoints = [{x:3, y:3}, {x:7, y:3}, {x:5, y:4}];
+    } else if (type === 'vertical_penalty') {
+        targetPoints = [{x:3, y:4}, {x:3, y:6}, {x:4, y:5}];
+    }
+    
+    drawSymmetryGridLogic(canvas, ctx);
+    
+    canvas.onclick = function(e) {
+        const rect = canvas.getBoundingClientRect();
+        var gX = Math.round((e.clientX - rect.left) / 40);
+        var gY = Math.round((e.clientY - rect.top) / 40);
+        if(gX >= 0 && gX <= 10 && gY >= 0 && gY <= 10) {
+            var idx = userPoints.findIndex(function(p){ return p.x===gX && p.y===gY; });
+            if(idx === -1) { if(userPoints.length < 3) userPoints.push({x:gX, y:gY}); } 
+            else { userPoints.splice(idx,1); }
+            drawSymmetryGridLogic(canvas, ctx);
+        }
+    };
+}
+
+function drawSymmetryGridLogic(canvas, ctx) {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    
+    // 網格底線（亮冰藍）
+    ctx.strokeStyle = "rgba(0, 242, 254, 0.22)"; ctx.lineWidth = 1.5;
+    for(var i=0; i<=canvas.width; i+=40) {
+        ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke();
+    }
+    
+    // 繪製題目原圖形（霓虹紫）
+    ctx.strokeStyle = "var(--high-bright-shape)"; ctx.fillStyle = "rgba(216, 0, 255, 0.35)"; ctx.lineWidth = 4;
+    ctx.beginPath();
+    if(activeSymmetryType === 'diagonal_1') { ctx.moveTo(3*40, 4*40); ctx.lineTo(4*40, 5*40); ctx.lineTo(3*40, 6*40); } 
+    else if(activeSymmetryType === 'horizontal_mid') { ctx.moveTo(4*40, 3*40); ctx.lineTo(6*40, 3*40); ctx.lineTo(5*40, 4*40); }
+    else if(activeSymmetryType === 'vertical_mid') { ctx.moveTo(3*40, 4*40); ctx.lineTo(3*40, 6*40); ctx.lineTo(4*40, 5*40); }
+    else if(activeSymmetryType === 'diagonal_2') { ctx.moveTo(3*40, 4*40); ctx.lineTo(4*40, 5*40); ctx.lineTo(3*40, 5*40); }
+    else if(activeSymmetryType === 'horizontal_penalty') { ctx.moveTo(3*40, 7*40); ctx.lineTo(7*40, 7*40); ctx.lineTo(5*40, 6*40); }
+    else if(activeSymmetryType === 'vertical_penalty') { ctx.moveTo(7*40, 4*40); ctx.lineTo(7*40, 6*40); ctx.lineTo(6*40, 5*40); }
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    
+    // 增強型對稱軸（紅虛線+霓虹發光）
+    ctx.save();
+    ctx.strokeStyle = "var(--neon-red)"; ctx.lineWidth = 5; ctx.shadowBlur = 10; ctx.shadowColor = "var(--neon-red)";
+    ctx.setLineDash([8, 5]); ctx.beginPath();
+    if(activeSymmetryType === 'diagonal_1') { ctx.moveTo(0,0); ctx.lineTo(canvas.width, canvas.height); } 
+    else if(activeSymmetryType === 'horizontal_mid' || activeSymmetryType === 'horizontal_penalty') { ctx.moveTo(0, 5*40); ctx.lineTo(canvas.width, 5*40); }
+    else if(activeSymmetryType === 'vertical_mid' || activeSymmetryType === 'vertical_penalty') { ctx.moveTo(5*40, 0); ctx.lineTo(5*40, canvas.height); }
+    else if(activeSymmetryType === 'diagonal_2') { ctx.moveTo(canvas.width, 0); ctx.lineTo(0, canvas.height); }
+    ctx.stroke(); ctx.restore();
+    
+    // 使用者點選
+    ctx.fillStyle = "var(--neon-blue)";
+    userPoints.forEach(function(p){ ctx.beginPath(); ctx.arc(p.x*40, p.y*40, 7, 0, 2*Math.PI); ctx.fill(); });
+    if(userPoints.length > 0) {
+        ctx.strokeStyle = "var(--neon-blue)"; ctx.lineWidth = 3; ctx.beginPath();
+        ctx.moveTo(userPoints[0].x*40, userPoints[0].y*40);
+        for(var i=1; i<userPoints.length; i++) { ctx.lineTo(userPoints[i].x*40, userPoints[i].y*40); }
+        if(userPoints.length === 3) { ctx.closePath(); ctx.fillStyle = "rgba(0, 242, 254, 0.25)"; ctx.fill(); }
+        ctx.stroke();
+    }
+}
+
+function checkSymmetryDrawing() {
+    var match = targetPoints.every(function(tp){ return userPoints.some(function(up){ return up.x===tp.x && up.y===tp.y; }); }) && targetPoints.length === userPoints.length;
+    
+    if(match) {
+        currentSpeedrunIndex++;
+        loadSpeedrunStage();
+    } else {
+        triggerShake(); 
+        alert("⚠️ 幾何鏡像對折重合失敗！後端自動加罰一題作圖題緊固螺絲！");
+        var penaltyItem = penaltySymPool[Math.floor(Math.random() * penaltySymPool.length)];
+        speedrunQueue.push(Object.assign({}, penaltyItem));
+        currentSpeedrunIndex++;
+        loadSpeedrunStage();
+    }
+}
+
+// ====================================================
+// 🚀 核心優化 3：Google 試算表同步連動引擎
+// ====================================================
+function submitToGoogleSheets() {
+    var q1 = document.getElementById('feedback-q1').value.trim();
+    var q2 = document.getElementById('feedback-q2').value.trim();
+    var q3 = document.getElementById('feedback-q3').value.trim();
+    
+    if(!q1 || !q2 || !q3) { alert("請完整填寫日誌回饋單的三個欄位再送出喔！"); return; }
+    
+    var btn = document.getElementById('submit-cloud-btn');
+    btn.disabled = true;
+    btn.innerText = "⚡ 正在與雲端星際試算表連動中...";
+
+    // 準備上傳的 JSON 資料包（對應試算表的欄位標題）
+    var payload = {
+        studentClass: studentData.class,
+        studentNo: studentData.no,
+        studentName: studentData.name,
+        timeUsed: finalTimeUsed,
+        feedback1: q1,
+        feedback2: q2,
+        feedback3: q3
+    };
+
+    // 1. 同時自動複製一份到學生的剪貼簿作為備份
+    var reportText = `=== 修復日誌備份 ===\n班級:${studentData.class}\n座號:${studentData.no}\n姓名:${studentData.name}\n耗時:${finalTimeUsed}秒\n【Q1】:${q1}\n【Q2】:${q2}\n【Q3】:${q3}`;
+    navigator.clipboard.writeText(reportText);
+
+    // 2. 透過 AJAX 發送 POST 請求給 Google Apps Script API 網址
+    if(GOOGLE_SCRIPT_URL.includes("xxxxxxxxxxxx")) {
+        alert("📋 備份成功！(由於尚未設定您的專屬 Google GAS 網址，已先幫您複製報告至剪貼簿，請手動傳給老師！)\n\n提示：請老師將 GAS 部署網址填入原始碼中的 GOOGLE_SCRIPT_URL 變數即可完美啟用全自動連動！");
+        btn.disabled = false;
+        btn.innerText = "🚀 送出修復日誌並連動雲端試算表";
+        return;
+    }
+
+    fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors", // 跨網域非同步請求
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    })
+    .then(function() {
+        alert("🎯 報告已完美上傳連動至 Google 雲端試算表！\n同時也已複製備份至您的剪貼簿！探險任務圓滿結束！");
+        btn.innerText = "✨ 雲端同步完成！";
+    })
+    .catch(function(error) {
+        console.error(error);
+        alert("❌ 網路連線或網址設定有誤，無法連動。但已將報告備份至您的剪貼簿，請手動貼上傳給老師！");
+        btn.disabled = false;
+        btn.innerText = "🚀 重試送出連動";
+    });
+}
+</script>
+</body>
+</html>
